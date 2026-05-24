@@ -1,99 +1,201 @@
- import javax.swing.*;
+  import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 
-// Main Class
-public class BrickBreakerGame {
-    public static void main(String[] args) {
-        JFrame obj = new JFrame();
-        Gameplay gamePlay = new Gameplay();
-        obj.setBounds(10, 10, 700, 600);
-        obj.setTitle("Brick Breaker Game");
-        obj.setResizable(true);
-        obj.setVisible(true);
-        obj.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        obj.add(gamePlay);
-    }
-}
+public class BrickBreakerGame extends JPanel implements KeyListener, ActionListener {
 
-// Gameplay Class
-class Gameplay extends JPanel implements KeyListener, ActionListener {
+    private boolean showHomeScreen = true;
+    private String difficulty = "MEDIUM";
+    private int difficultySpeed = 8;
+
     private boolean play = false;
     private int score = 0;
-
-    private int totalBricks = 90;
+    private int totalBricks;
     private Timer timer;
-    private int delay = 0;
+    private int delay = 8;
 
-    private int playerX = 310; // paddle position
+    private int playerX = 310;
 
     private int ballPosX = 120;
     private int ballPosY = 350;
-    private int ballDirX = -1;
-    private int ballDirY = -2;
+    private int ballXDir = -1;
+    private int ballYDir = -2;
 
-    private MapGenerator map;
+    private int level = 1;
+    private int maxLevels = 3;
 
-    public Gameplay() {
-        map = new MapGenerator(3, 7);
+    private BrickMap map;
+
+    public BrickBreakerGame() {
+        loadLevel(level);
+
         addKeyListener(this);
         setFocusable(true);
         setFocusTraversalKeysEnabled(false);
-        timer = new Timer(delay, this);
+
+        timer = new Timer(difficultySpeed, this);
         timer.start();
     }
 
+    private void loadLevel(int currentLevel) {
+        int rows = 3 + currentLevel;
+        int cols = 7;
+        map = new BrickMap(rows, cols);
+        totalBricks = rows * cols;
+
+        ballPosX = 120;
+        ballPosY = 350;
+        ballXDir = -1;
+        ballYDir = -2;
+
+        playerX = 310;
+        play = false;
+    }
+
     public void paint(Graphics g) {
-        // background
-        g.setColor(Color.black);
-        g.fillRect(1, 1, 692, 592);
 
-        // drawing map
-        map.draw((Graphics2D) g);
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // bordersgto
-        g.setColor(Color.yellow);
-        g.fillRect(0, 0, 3, 592);
-        g.fillRect(0, 0, 692, 3);
-        g.fillRect(691, 0, 3, 592);
+        // Attractive Gradient Background
+        GradientPaint gradient = new GradientPaint(0, 0, new Color(20, 20, 40), 700, 600, new Color(0, 120, 255));
+        g2d.setPaint(gradient);
+        g2d.fillRect(0, 0, getWidth(), getHeight());
 
-        // scores
-        g.setColor(Color.white);
-        g.setFont(new Font("serif", Font.BOLD, 25));
-        g.drawString("" + score, 590, 30);
+        // Home Screen
+        if (showHomeScreen) {
+            g.setColor(new Color(0, 255, 200));
+            // Dark Theme Home Screen with Background Visuals
+            g.setColor(new Color(15, 15, 25));
+            g.fillRect(0, 0, getWidth(), getHeight());
 
-        // paddle
-        g.setColor(Color.green);
-        g.fillRect(playerX, 550, 100, 8);
+            // Animated Visual Background
+            g.setColor(new Color(0, 255, 255, 40));
+            for (int i = 0; i < getWidth(); i += 150) {
+                g.fillOval(i, 100, 120, 120);
+                g.fillOval(i + 80, 400, 90, 90);
+            }
 
-        // ball
-        g.setColor(Color.yellow);
-        g.fillOval(ballPosX, ballPosY, 20, 20);
+            g.setColor(new Color(255, 255, 255, 20));
+            for (int i = 50; i < getWidth(); i += 200) {
+                g.drawLine(i, 0, i + 200, getHeight());
+            }
 
-        // win condition
-        if (totalBricks <= 0) {
-            play = false;
-            ballDirX = 0;
-            ballDirY = 0;
-            g.setColor(Color.red);
-            g.setFont(new Font("serif", Font.BOLD, 30));
-            g.drawString("You Won!", 260, 300);
+            g.setFont(new Font("Verdana", Font.BOLD, 50));
+            FontMetrics titleMetrics = g.getFontMetrics();
+            int titleX = (getWidth() - titleMetrics.stringWidth("BRICK BREAKER GAME")) / 2;
+            g.drawString("BRICK BREAKER GAME", titleX, 220);
 
-            g.setFont(new Font("serif", Font.BOLD, 20));
-            g.drawString("Press Enter to Restart", 230, 350);
+            g.setFont(new Font("Arial", Font.BOLD, 28));
+            g.setColor(new Color(255, 170, 0));
+            FontMetrics startMetrics = g.getFontMetrics();
+            int startX = (getWidth() - startMetrics.stringWidth("Press ENTER to Start")) / 2;
+            g.drawString("Press ENTER to Start", startX, 320);
+
+            g.setFont(new Font("Arial", Font.BOLD, 24));
+            g.setColor(Color.WHITE);
+            String difficultyText = "Difficulty: " + difficulty;
+            FontMetrics diffMetrics = g.getFontMetrics();
+            int diffX = (getWidth() - diffMetrics.stringWidth(difficultyText)) / 2;
+            g.drawString(difficultyText, diffX, 380);
+
+            g.setFont(new Font("Arial", Font.PLAIN, 22));
+            g.setColor(Color.LIGHT_GRAY);
+            String info = "Press 1-EASY   2-MEDIUM   3-HARD";
+            FontMetrics infoMetrics = g.getFontMetrics();
+            int infoX = (getWidth() - infoMetrics.stringWidth(info)) / 2;
+            g.drawString(info, infoX, 430);
+
+            g.setColor(Color.CYAN);
+            FontMetrics controlMetrics = g.getFontMetrics();
+            int controlX = (getWidth() - controlMetrics.stringWidth("Use LEFT and RIGHT Arrow Keys")) / 2;
+            g.drawString("Use LEFT and RIGHT Arrow Keys", controlX, 500);
+
+            g.setColor(Color.GREEN);
+            FontMetrics winMetrics = g.getFontMetrics();
+            int winX = (getWidth() - winMetrics.stringWidth("Destroy All Bricks to Win!")) / 2;
+            g.drawString("Destroy All Bricks to Win!", winX, 560);
+
+            return;
         }
 
-        // lose condition
+        // Border
+        g.setColor(Color.yellow);
+        g.fillRect(0, 0, 5, getHeight());
+        g.fillRect(0, 0, getWidth(), 5);
+        g.fillRect(getWidth() - 5, 0, 5, getHeight());
+
+        // Center Game Layout
+        int gameAreaWidth = 700;
+        int gameOffsetX = (getWidth() - gameAreaWidth) / 2;
+
+        // Score
+        g.setColor(Color.white);
+        g.setFont(new Font("serif", Font.BOLD, 20));
+        g.drawString("Score: " + score, gameOffsetX + 500, 30);
+
+        // Level
+        g.drawString("Level: " + level, gameOffsetX + 20, 30);
+
+        // Decorative Background Effects
+        g.setColor(new Color(255, 255, 255, 25));
+        for (int i = 0; i < getWidth(); i += 120) {
+            g.fillOval(i, 80, 80, 80);
+            g.fillOval(i + 60, 300, 50, 50);
+        }
+
+        // Draw bricks in center
+        map.draw((Graphics2D) g, gameOffsetX);
+
+        // Center Game Area
+        int gameCenterX = (getWidth() - 700) / 2;
+
+        // Paddle
+        g.setColor(new Color(0, 255, 120));
+        g.fillRoundRect(gameCenterX + playerX, getHeight() - 80, 120, 12, 20, 20);
+
+        // Ball
+        g.setColor(Color.red);
+        g.setColor(new Color(255, 80, 80));
+        g.fillOval(gameOffsetX + ballPosX, ballPosY, 20, 20);
+
+        // Ball Glow
+        g.setColor(new Color(255, 0, 0, 80));
+        g.fillOval(gameOffsetX + ballPosX - 5, ballPosY - 5, 30, 30);
+
+        // Win condition
+        if (totalBricks <= 0) {
+            play = false;
+            ballXDir = 0;
+            ballYDir = 0;
+
+            if (level < maxLevels) {
+                g.setColor(Color.green);
+                g.setFont(new Font("serif", Font.BOLD, 30));
+                g.drawString("Level " + level + " Completed!", 180, 250);
+                g.setFont(new Font("serif", Font.BOLD, 20));
+                g.drawString("Press ENTER for Next Level", 200, 300);
+            } else {
+                g.setColor(Color.green);
+                g.setFont(new Font("serif", Font.BOLD, 30));
+                g.drawString("You Won the Game!", 200, 250);
+                g.setFont(new Font("serif", Font.BOLD, 20));
+                g.drawString("Final Score: " + score, 250, 300);
+            }
+        }
+
+        // Game Over
         if (ballPosY > 570) {
             play = false;
-            ballDirX = 0;
-            ballDirY = 0;
+            ballXDir = 0;
+            ballYDir = 0;
+
             g.setColor(Color.red);
             g.setFont(new Font("serif", Font.BOLD, 30));
-            g.drawString("Game Over, Score: " + score, 190, 300);
+            g.drawString("Game Over", 250, 250);
 
             g.setFont(new Font("serif", Font.BOLD, 20));
-            g.drawString("Press Enter to Restart", 230, 350);
+            g.drawString("Press SPACE to Restart", 220, 300);
         }
 
         g.dispose();
@@ -102,15 +204,19 @@ class Gameplay extends JPanel implements KeyListener, ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         timer.start();
+
         if (play) {
-            // ball-paddle collision
-            if (new Rectangle(ballPosX, ballPosY, 20, 20).intersects(new Rectangle(playerX, 550, 100, 8))) {
-                ballDirY = -ballDirY;
+
+            // Paddle collision
+            if (new Rectangle(ballPosX, ballPosY, 20, 20)
+                    .intersects(new Rectangle(playerX, getHeight() - 80, 120, 12))) {
+                ballYDir = -ballYDir;
             }
 
-            // ball-brick collision
-            A: for (int i = 0; i < map.map.length; i++) {
+            A:
+            for (int i = 0; i < map.map.length; i++) {
                 for (int j = 0; j < map.map[0].length; j++) {
+
                     if (map.map[i][j] > 0) {
                         int brickX = j * map.brickWidth + 80;
                         int brickY = i * map.brickHeight + 50;
@@ -124,36 +230,68 @@ class Gameplay extends JPanel implements KeyListener, ActionListener {
                         if (ballRect.intersects(brickRect)) {
                             map.setBrickValue(0, i, j);
                             totalBricks--;
-                            score += 5;
+                            score += 10;
 
                             if (ballPosX + 19 <= brickRect.x || ballPosX + 1 >= brickRect.x + brickRect.width) {
-                                ballDirX = -ballDirX;
+                                ballXDir = -ballXDir;
                             } else {
-                                ballDirY = -ballDirY;
+                                ballYDir = -ballYDir;
                             }
+
                             break A;
                         }
                     }
                 }
             }
 
-            ballPosX += ballDirX;
-            ballPosY += ballDirY;
+            ballPosX += ballXDir;
+            ballPosY += ballYDir;
+
             if (ballPosX < 0) {
-                ballDirX = -ballDirX;
+                ballXDir = -ballXDir;
             }
             if (ballPosY < 0) {
-                ballDirY = -ballDirY;
+                ballYDir = -ballYDir;
             }
             if (ballPosX > 670) {
-                ballDirX = -ballDirX;
+                ballXDir = -ballXDir;
             }
         }
+
         repaint();
     }
 
     @Override
     public void keyPressed(KeyEvent e) {
+
+        if (showHomeScreen) {
+            if (e.getKeyCode() == KeyEvent.VK_1) {
+                difficulty = "EASY";
+                difficultySpeed = 12;
+                timer.setDelay(difficultySpeed);
+                repaint();
+            }
+
+            if (e.getKeyCode() == KeyEvent.VK_2) {
+                difficulty = "MEDIUM";
+                difficultySpeed = 8;
+                timer.setDelay(difficultySpeed);
+                repaint();
+            }
+
+            if (e.getKeyCode() == KeyEvent.VK_3) {
+                difficulty = "HARD";
+                difficultySpeed = 4;
+                timer.setDelay(difficultySpeed);
+                repaint();
+            }
+        }
+
+        if (e.getKeyCode() == KeyEvent.VK_ENTER && showHomeScreen) {
+            showHomeScreen = false;
+            repaint();
+        }
+
         if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
             if (playerX >= 600) {
                 playerX = 600;
@@ -170,20 +308,14 @@ class Gameplay extends JPanel implements KeyListener, ActionListener {
             }
         }
 
-        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-            if (!play) {
-                play = true;
-                ballPosX = 120;
-                ballPosY = 350;
-                ballDirX = -1;
-                ballDirY = -2;
-                playerX = 310;
-                score = 0;
-                totalBricks = 21;
-                map = new MapGenerator(3, 7);
+        if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+            restartGame();
+        }
 
-                repaint();
-            }
+        if (e.getKeyCode() == KeyEvent.VK_ENTER && totalBricks <= 0 && level < maxLevels) {
+            level++;
+            loadLevel(level);
+            repaint();
         }
     }
 
@@ -197,40 +329,77 @@ class Gameplay extends JPanel implements KeyListener, ActionListener {
         playerX -= 20;
     }
 
+    private void restartGame() {
+        play = false;
+        score = 0;
+        level = 1;
+        loadLevel(level);
+        repaint();
+    }
+
     @Override
-    public void keyReleased(KeyEvent e) {}
+    public void keyReleased(KeyEvent e) {
+    }
+
     @Override
-    public void keyTyped(KeyEvent e) {}
+    public void keyTyped(KeyEvent e) {
+    }
+
+    public static void main(String[] args) {
+
+        JFrame obj = new JFrame();
+        BrickBreakerGame gamePlay = new BrickBreakerGame();
+
+        obj.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        obj.setUndecorated(false);
+        obj.setTitle("Java Brick Breaker Game");
+        obj.setResizable(true);
+        obj.setVisible(true);
+        obj.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        obj.add(gamePlay);
+    }
 }
 
-// Map Generator Class
-class MapGenerator {
-    public int map[][];
+class BrickMap {
+
+    public int[][] map;
     public int brickWidth;
     public int brickHeight;
 
-    public MapGenerator(int row, int col) {
+    public BrickMap(int row, int col) {
         map = new int[row][col];
+
         for (int i = 0; i < map.length; i++) {
             for (int j = 0; j < map[0].length; j++) {
-                map[i][j] = 1; // brick is visible
+                map[i][j] = 1;
             }
         }
+
         brickWidth = 540 / col;
         brickHeight = 150 / row;
     }
 
-    public void draw(Graphics2D g) {
+    public void draw(Graphics2D g, int offsetX) {
         for (int i = 0; i < map.length; i++) {
             for (int j = 0; j < map[0].length; j++) {
+
                 if (map[i][j] > 0) {
                     g.setColor(Color.white);
-                    g.fillRect(j * brickWidth + 80, i * brickHeight + 50, brickWidth, brickHeight);
+                    g.fillRoundRect(offsetX + j * brickWidth + 80,
+                            i * brickHeight + 50,
+                            brickWidth,
+                            brickHeight,
+                            15,
+                            15);
 
-                    // brick borders
                     g.setStroke(new BasicStroke(3));
                     g.setColor(Color.black);
-                    g.drawRect(j * brickWidth + 80, i * brickHeight + 50, brickWidth, brickHeight);
+                    g.drawRoundRect(offsetX + j * brickWidth + 80,
+                            i * brickHeight + 50,
+                            brickWidth,
+                            brickHeight,
+                            15,
+                            15);
                 }
             }
         }
