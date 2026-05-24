@@ -1,8 +1,8 @@
- Brick Breaker Game
+_** Brick Breaker Game**_
 
 A classic Brick Breaker arcade game developed using Java. The project demonstrates object-oriented programming concepts, game loop implementation, collision detection, and GUI development using Java Swing/JavaFX.
 
-Features
+**Features**
 
 Interactive Brick Breaker gameplay
 Ball and paddle collision detection
@@ -13,7 +13,7 @@ Smooth graphical interface using Java
 Lightweight and easy to run
 Deployment files uploaded to Amazon S3 using AWS CLI
 
-Tech Stack
+**Tech Stack**
 Java
 Java Swing / JavaFX
 Git & GitHub
@@ -21,8 +21,8 @@ AWS CLI
 Amazon S3
 
  
-
-Make sure the following are installed:
+**
+Make sure the following are installed:**
 
 Java JDK 8 or above
 Git
@@ -31,7 +31,7 @@ Clone the Repository
 git clone https://github.com/Kartikeytt/Brick-Breaker-Game.git
   
 
-The project files were uploaded to Amazon S3 using AWS CLI commands for cloud storage and deployment practice.
+**The project files were uploaded to Amazon S3 using AWS CLI commands for cloud storage and deployment practice.**
 
 AWS CLI Commands Used
 Configure AWS CLI
